@@ -23,7 +23,7 @@ defined('BASEPATH') OR exit('No direct script access allowed');
 | a PHP script and you can easily do that on your own.
 |
 */
-$config['base_url'] = '';
+$config['base_url'] = 'http://www.fullstackspa.cl/load-unload-spreadsheet/';
 
 /*
 |--------------------------------------------------------------------------
@@ -137,6 +137,8 @@ $config['subclass_prefix'] = 'MY_';
 |	autoloading (application/config/autoload.php)
 */
 $config['composer_autoload'] = TRUE;
+$config['composer_autoload'] = 'vendor/autoload.php';
+
 
 /*
 |--------------------------------------------------------------------------
@@ -475,7 +477,7 @@ $config['csrf_exclude_uris'] = array();
 | by the output class.  Do not 'echo' any values with compression enabled.
 |
 */
-$config['compress_output'] = FALSE;
+$config['compress_output'] = TRUE;
 
 /*
 |--------------------------------------------------------------------------
