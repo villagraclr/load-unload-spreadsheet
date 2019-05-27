@@ -1,7 +1,5 @@
 <?php
 defined('BASEPATH') OR exit('No direct script access allowed');
-use PhpOffice\PhpSpreadsheet\Spreadsheet;
-use PhpOffice\PhpSpreadsheet\Writer\Xlsx;
 
 class Welcome extends CI_Controller {
 
@@ -22,41 +20,6 @@ class Welcome extends CI_Controller {
 	 */
 	public function index()
 	{
-		$this->output->enable_profiler(TRUE);
-		$this->generate_file();
-		$this->download();
-		echo "archivo cargado";
-	}
-	public function generate_file(){
-		$spreadsheet = new Spreadsheet();
-                $sheet = $spreadsheet->getActiveSheet();
-                $sheet->setCellValue('A1', 'Hello World !');
-
-                $writer = new Xlsx($spreadsheet);
-
-                $filename = '/tmp/name-of-the-generated-file.xlsx';
-
-                $writer->save($filename);
-	}
-	public function download()
-	{
-		$this->output->enable_profiler(TRUE);
-		$spreadsheet = new Spreadsheet();
-		$sheet = $spreadsheet->getActiveSheet();
-		$sheet->setCellValue('A1', 'Hello World !');
 		
-		$writer = new Xlsx($spreadsheet);
-		$path = "/tmp/";
-		$filename = 'name-of-the-generated-file';
-		$path = "/tmp/".$filename.".xlsx";
-
-		header('Content-Type: application/vnd.ms-excel');
-		header('Content-Disposition: attachment;filename="'.$filename .'.xlsx"');
-		 header('Content-Length: ' . filesize($path));
-
-		header('Cache-Control: max-age=0');
-		
-		$writer->save('php://output');
-
 	}
 }
