@@ -1,8 +1,5 @@
 <?php
 defined('BASEPATH') OR exit('No direct script access allowed');
-use PhpOffice\PhpSpreadsheet\Spreadsheet;
-use PhpOffice\PhpSpreadsheet\Writer\Xlsx;
-use PhpOffice\PhpSpreadsheet\IOFactory;
 
 class Upload extends CI_Controller {
 
@@ -24,7 +21,7 @@ class Upload extends CI_Controller {
 	public function __construct()
         {
                 parent::__construct();
-               	
+               	$this->load->library('spreadsheet_lib');	
         }
 	public function index()
 	{
@@ -52,7 +49,6 @@ class Upload extends CI_Controller {
 			$config['remove_spaces'] = TRUE;
 			$config['file_ext_tolower'] = TRUE;
 					
-			$this->upload->initialize($config);
 			$this->load->library('upload', $config);
 			$upload_file_name = $this->upload->do_upload('userfile');
 			if ( ! $upload_file_name)
@@ -63,8 +59,16 @@ class Upload extends CI_Controller {
 			}
 			else
 			{
-				$data['upload_file_name'] = $upload_file_name;
-				$this->load->view('upload_success', $data);
+				$data['upload_file_name'] = $this->upload->data();
+				$full_path = $data['upload_file_name']['full_path'];
+				$spreadsheet_ins = new Spreadsheet_lib();
+				$document = $spreadsheet_ins->get_document($full_path);
+				//$documento = IOFactory::load($full_path);
+				# Recuerda que un documento puede tener múltiples hojas
+				# obtener conteo e iterar
+				//$totalDeHojas = $documento->getSheetCount();
+				//$data['totalDeHojas'] = $totalDeHojas;
+				$this->load->view('spreadsheet/upload_success', $data);
 			}
 		}
         }

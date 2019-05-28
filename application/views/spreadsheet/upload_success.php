@@ -1,3 +1,3 @@
 <?php
-	print_r($upload_file_name);
+	print_r($data);
 ?>
