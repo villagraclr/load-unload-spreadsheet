@@ -8,17 +8,13 @@ use PhpOffice\PhpSpreadsheet\IOFactory;
 class Spreadsheet_lib {
 
 	function __construct() {
-		$cache = new FilesystemCache();
-		\PhpOffice\PhpSpreadsheet\Settings::setCache($cache);
-		$reader = IOFactory::createReader($inputFileType);
-		$spreadsheet = $reader->load($inputFileName);
 	}
     	public function get_document($full_path = '')
     	{
-		//$document = IOFactory::load($full_path);
-		$inputFileType = end(explode('.', $full_path));
-		$reader = IOFactory::createReader($inputFileType);
-                $spreadsheet = $reader->load($inputFileName);
+		$document = IOFactory::load($full_path);
+		//$inputFileType = end(explode('.', $full_path));
+		//$reader = IOFactory::createReader($inputFileType);
+                //$spreadsheet = $reader->load($inputFileName);
 		return $document;
     	}
 }
