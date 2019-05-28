@@ -2,6 +2,7 @@
 defined('BASEPATH') OR exit('No direct script access allowed');
 use PhpOffice\PhpSpreadsheet\Spreadsheet;
 use PhpOffice\PhpSpreadsheet\Writer\Xlsx;
+use PhpOffice\PhpSpreadsheet\IOFactory;
 
 class Upload extends CI_Controller {
 
@@ -20,43 +21,67 @@ class Upload extends CI_Controller {
 	 * map to /index.php/welcome/<method_name>
 	 * @see https://codeigniter.com/user_guide/general/urls.html
 	 */
+	public function __construct()
+        {
+                parent::__construct();
+               	
+        }
 	public function index()
 	{
-		$this->output->enable_profiler(TRUE);
-		$this->generate_file();
-		$this->download();
-		echo "archivo cargado";
-	}
-	public function generate_file(){
-		$spreadsheet = new Spreadsheet();
-                $sheet = $spreadsheet->getActiveSheet();
-                $sheet->setCellValue('A1', 'Hello World !');
-
-                $writer = new Xlsx($spreadsheet);
-
-                $filename = '/tmp/name-of-the-generated-file.xlsx';
-
-                $writer->save($filename);
-	}
-	public function download()
-	{
-		$this->output->enable_profiler(TRUE);
-		$spreadsheet = new Spreadsheet();
-		$sheet = $spreadsheet->getActiveSheet();
-		$sheet->setCellValue('A1', 'Hello World !');
+		//$this->output->enable_profiler(TRUE);
+		//$this->generate_file();
+		//$this->download();
 		
-		$writer = new Xlsx($spreadsheet);
-		$path = "/tmp/";
-		$filename = 'name-of-the-generated-file';
-		$path = "/tmp/".$filename.".xlsx";
+	}
+	public function do_upload()
+        {
+		$this->form_validation->set_rules('userfile', 'File', 'trim|xss_clean|callback_file_selected');
+		if ($this->form_validation->run()==FALSE) 
+		{
+			$error = 'Error al cargar archivo';
+                        $this->session->set_flashdata('error', $error);
+                        //redirect(base_url());
 
-		header('Content-Type: application/vnd.ms-excel');
-		header('Content-Disposition: attachment;filename="'.$filename .'.xlsx"');
-		 header('Content-Length: ' . filesize($path));
+		}
+		else
+		{
+			//$config['file_name']        = 'example1';
+			$path = ROOT_UPLOAD_IMPORT_PATH;
+			$config['upload_path']          = $path;
+			$config['allowed_types']        = 'xlsx|xls';
+			$config['remove_spaces'] = TRUE;
+			$config['file_ext_tolower'] = TRUE;
+					
+			$this->upload->initialize($config);
+			$this->load->library('upload', $config);
+			$upload_file_name = $this->upload->do_upload('userfile');
+			if ( ! $upload_file_name)
+			{
+				$error = array('error' => $this->upload->display_errors());
+				$this->session->set_flashdata('error', $error);
+				//redirect(base_url());
+			}
+			else
+			{
+				$data['upload_file_name'] = $upload_file_name;
+				$this->load->view('upload_success', $data);
+			}
+		}
+        }
+	function file_selected(){
 
-		header('Cache-Control: max-age=0');
-		
-		$writer->save('php://output');
-
+		if (empty($_FILES['userfile']['name'])) {
+			$this->form_validation->set_message('file_selected', 'Please select file.');
+			return false;
+		}else{
+			$arr_file = explode('.', $_FILES['userfile']['name']);
+			$extension = end($arr_file);
+			if($extension == 'xlsx' || $extension == 'xls'){
+				return true;
+			}else{
+				$this->form_validation->set_message('file_selected', 'Please choose correct file.');
+				return false;
+			}
+		}
 	}
 }
