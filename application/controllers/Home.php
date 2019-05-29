@@ -8,7 +8,7 @@ class Home extends CI_Controller {
 	{
 		$error = $this->session->flashdata('error');
 		$this->load->view('templates/header');
-        	$this->load->view('spreadsheet/index',$error);
-        	$this->load->view('templates/footer');
+		$this->load->view('spreadsheet/index',$error);
+		$this->load->view('templates/footer');
 	}
 }

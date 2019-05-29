@@ -84,4 +84,4 @@ defined('EXIT_DATABASE')       OR define('EXIT_DATABASE', 8); // database error
 defined('EXIT__AUTO_MIN')      OR define('EXIT__AUTO_MIN', 9); // lowest automatically-assigned error code
 defined('EXIT__AUTO_MAX')      OR define('EXIT__AUTO_MAX', 125); // highest automatically-assigned error code
 defined('ROOT_UPLOAD_IMPORT_PATH')      OR define('ROOT_UPLOAD_IMPORT_PATH', 'uploads/'); // Directory upload Excel files
-
+defined('MAX_ROW_LIMIT_PREVIEW')      OR define('MAX_ROW_LIMIT_PREVIEW', 3); // Spread sheet row limit preview

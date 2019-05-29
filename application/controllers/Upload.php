@@ -19,10 +19,12 @@ class Upload extends CI_Controller {
 	 * @see https://codeigniter.com/user_guide/general/urls.html
 	 */
 	public function __construct()
-        {
-                parent::__construct();
-               	$this->load->library('spreadsheet_lib');	
-        }
+	{
+			parent::__construct();
+			$this->load->library('spreadsheet_lib');				
+			$this->load->model('Excel_modelo');
+			$this->load->helper('functions');
+	}
 	public function index()
 	{
 		//$this->output->enable_profiler(TRUE);
@@ -59,16 +61,30 @@ class Upload extends CI_Controller {
 			}
 			else
 			{
+				$tables = $this->Excel_modelo->list_tables();
+				$tables_columns = array();
+				foreach ($tables as $table)
+				{
+						$columns = $this->Excel_modelo->list_fields($table);
+						$tables_columns[$table] = $columns;
+				}
+				$data['tables_columns'] = $tables_columns;
+				
 				$data['upload_file_name'] = $this->upload->data();
+				
 				$full_path = $data['upload_file_name']['full_path'];
-				$spreadsheet_ins = new Spreadsheet_lib();
-				$document = $spreadsheet_ins->get_document($full_path);
-				//$documento = IOFactory::load($full_path);
-				# Recuerda que un documento puede tener múltiples hojas
-				# obtener conteo e iterar
-				//$totalDeHojas = $documento->getSheetCount();
-				//$data['totalDeHojas'] = $totalDeHojas;
+				
+				$obj_spreadsheet = new Spreadsheet_lib();
+				$obj_spreadsheet->init($full_path);
+				$worksheet_names = $obj_spreadsheet->get_list_worksheet_names();
+				$data['sheet_names'] = $worksheet_names;
+				$cols_name = $obj_spreadsheet->get_list_cols_name();
+				$data['cols_name'] = $cols_name;
+				$topfive_elements = $obj_spreadsheet->get_topfive_elements();
+				$data['topfive_elements'] = $topfive_elements;
+				$this->load->view('templates/header');
 				$this->load->view('spreadsheet/upload_success', $data);
+				$this->load->view('templates/footer');
 			}
 		}
         }

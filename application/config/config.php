@@ -23,7 +23,7 @@ defined('BASEPATH') OR exit('No direct script access allowed');
 | a PHP script and you can easily do that on your own.
 |
 */
-$config['base_url'] = 'http://www.fullstackspa.cl/load-unload-spreadsheet/';
+$config['base_url'] = 'http://www.full-stack.cl/load-unload-spreadsheet/';
 
 /*
 |--------------------------------------------------------------------------

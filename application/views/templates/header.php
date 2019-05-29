@@ -6,8 +6,9 @@
 <link rel="icon" href="<?php echo base_url()?>assets/images/logo.png">
  <link rel="stylesheet" href="<?php echo base_url()?>assets/css/style.css">
 <link rel="stylesheet" href="<?php echo base_url()?>vendor/twbs/bootstrap/dist/css/bootstrap.min.css">
+
+ <script src="https://code.jquery.com/jquery-3.4.1.min.js" integrity="sha256-CSXorXvZcTkaix6Yvo6HppcZGetbYMGWSFlBw8HfCJo=" crossorigin="anonymous"></script>
  <script src="<?php echo base_url()?>vendor/twbs/bootstrap/dist/js/bootstrap.min.js"></script> 
-<script src="https://cdn.jsdelivr.net/npm/vue@2.6.10/dist/vue.js"></script>
   
 </head>
 <body class="bg-light">
