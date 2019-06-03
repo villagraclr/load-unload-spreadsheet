@@ -51,4 +51,12 @@ defined('BASEPATH') OR exit('No direct script access allowed');
 */
 $route['default_controller'] = 'home';
 $route['404_override'] = '';
-$route['translate_uri_dashes'] = FALSE;
+$route['translate_uri_dashes'] = TRUE;
+
+$route['get-worksheets']['get'] = 'upload/get_worksheets';
+$route['get-tables-available']['post'] = 'upload/get_tables_available';
+$route['set-associate-sheet-table']['post'] = 'upload/set_associate_sheet_table';
+$route['reverse-associate-sheet-table']['post'] = 'upload/reverse_associate_sheet_table';
+$route['get-associate-sheet-table']['get'] = 'upload/get_associate_sheet_table';
+$route['load-preview-data']['get'] = 'upload/load_preview_data';
+

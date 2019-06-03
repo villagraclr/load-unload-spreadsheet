@@ -63,13 +63,14 @@ class Spreadsheet_lib {
 			$last_column_letter = $worksheet['lastColumnLetter'];
 			$worksheet_name = $worksheet['worksheetName'];
 			$limit_preview = MAX_ROW_LIMIT_PREVIEW+1;
-			$filterSubset = new MyReadFilter(2, $limit_preview, range('A', $last_column_letter));
+			$filterSubset = new MyReadFilter(1, $limit_preview, range('A', $last_column_letter));
 			$this->reader->setLoadSheetsOnly($worksheet_name);
 			$this->reader->setReadFilter($filterSubset);
 			//$reader->setReadDataOnly(true);
 			$spreadsheet = $this->reader->load($this->full_path);
 			
 			$worksheet_full = $spreadsheet->getActiveSheet()->toArray(null, true, true, true);
+
 			$row_for_delete = array();
 			foreach ($worksheet_full as $key => $value):
 				if(!valid_row($value))
