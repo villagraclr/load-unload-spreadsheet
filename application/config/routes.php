@@ -59,4 +59,7 @@ $route['set-associate-sheet-table']['post'] = 'upload/set_associate_sheet_table'
 $route['reverse-associate-sheet-table']['post'] = 'upload/reverse_associate_sheet_table';
 $route['get-associate-sheet-table']['get'] = 'upload/get_associate_sheet_table';
 $route['load-preview-data']['get'] = 'upload/load_preview_data';
-
+$route['get-associate-columns']['get'] = 'upload/get_associate_columns';
+$route['set-associate-columns']['get'] = 'upload/set_associate_columns';
+$route['reverse-associate-columns']['get'] = 'upload/reverse_associate_columns';
+$route['load-file-in-database']['get'] = 'upload/load_file_in_database';

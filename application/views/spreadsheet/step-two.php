@@ -35,7 +35,7 @@
 			</div>
 		</div>	
 		<div class="table-responsive">
-			<table class="table">
+			<table class="table table-striped">
 			<tr>
 				<th>Sheet Name</th>
 				<th>Table</th>

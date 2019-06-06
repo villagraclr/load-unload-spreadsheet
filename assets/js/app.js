@@ -54,7 +54,7 @@ Vue.component('upload-file-db', {
 			axios.get(url_preview_data)
 			.then((res) => {
 				if (res.data.success) {
-					this.preview_data = res.data.topfive_elements;
+					this.preview_data = res.data.top_elements;
 					this.show_preview = false;
 				}
 				if (res.data.error) {
@@ -214,9 +214,248 @@ var match = new Vue({
 })
 
 Vue.component('load-data-on-tables', {
-  template: '#load-data-template-on-tables'
-  
-})
+	template: '#load-data-template-on-tables',
+	data: function() {
+		return {
+			selected_sheet: '',
+			selected_column_table: '',
+			selected_column_sheet: '',
+			form_data: {},
+			associate_columns: [
+			],
+			column_table_to_associate: [
+			],
+			column_sheet_to_associate: [
+			],
+			sheet_availables: [
+			],
+			table_columns_availables: [
+			],
+			sheet_columns_availables: [
+			],
+			sheet_table_asigned: [
+			],
+			all_sheet_columns: [
+			]
+		}
+	},
+	created () {
+		this.$nextTick(this.loadTodo);
+	},
+	methods: {
+		loadTodo: function(){
+			var url = 'http://www.full-stack.cl/load-unload-spreadsheet/upload/get-associate-columns';
+			axios.get(url)
+			.then((res) => {
+				if (res.data.success) {
+					this.selected_sheet = [];
+					this.sheet_availables = [];
+					this.table_columns_availables = [];
+					this.sheet_columns_availables = [];
+					
+					this.associate_columns = [];
+					this.column_table_to_associate = [];
+					this.column_sheet_to_associate = [];
+					
+					this.sheet_table_asigned = res.data.sheet_table_asigned;
+					this.all_sheet_columns = res.data.sheet_columns;
+					this.renderTable();
+					this.renderSelect();
+				}
+				if (res.data.error) {
+					$('#error').html(res.data.error)
+				}	
+			})
+			.catch((error) =>{
+			  console.log(error);
+			});
+		},
+		getTranslateColumnSheet: function(sheet, key_column){
+			for (var property in this.all_sheet_columns) {
+				if(property == sheet){
+					for (let [key, value] of Object.entries(this.all_sheet_columns[property])){
+						if(key == key_column){
+							return value;
+						}
+					}				
+				}
+			}
+			return '';
+		},
+		isColumnBusy: function(sheet, key_column){
+			for (let i=0;i<this.associate_columns.length; i++){
+				if(this.associate_columns[i]['sheet'] == sheet && this.associate_columns[i]['value'] == key_column){
+					return true;
+				}
+			}
+			return false;
+		},
+		getIdTable: function(sheet){
+			for (let i=0;i<this.column_table_to_associate.length; i++){
+				if(this.column_table_to_associate[i]['sheet'] == sheet){
+					return this.column_table_to_associate[i]['id'];
+				}
+			}
+			return 0;
+		},
+		renderSelect: function(){
+			let count = 0;
+			for (var property in this.all_sheet_columns){
+				for (let [key, value] of Object.entries(this.all_sheet_columns[property])){
+					if(!this.isColumnBusy(`${property}`, `${key}`)){						
+						this.column_sheet_to_associate.push(
+						{
+							'sheet': `${property}`,
+							'key': `${key}`,
+							'value': `${value}`
+						});
+						count++;
+					}
+				}
+				if(count > 0){
+					this.sheet_availables.push(
+					{
+						'key': this.getIdTable(`${property}`),
+						'value': `${property}`
+					});
+				}
+				count = 0;
+			}
+		},
+		renderTable: function(){
+			if(this.sheet_table_asigned.length > 0){
+				let relation;				
+				for (let i = 0; i < this.sheet_table_asigned.length; i++) {
+					relation = JSON.parse(this.sheet_table_asigned[i]['relation']);
+					for (let [key, value] of Object.entries(relation)) {
+						if(value !== ''){
+							let translate = this.getTranslateColumnSheet(`${this.sheet_table_asigned[i]['sheet']}`, `${value}`);
+							this.associate_columns.push(
+							{
+							'id': `${this.sheet_table_asigned[i]['id']}`,
+							'sheet': `${this.sheet_table_asigned[i]['sheet']}`,
+							'table': `${this.sheet_table_asigned[i]['tmp_table']}`,
+							'key': `${key}`,
+							'value': `${value}`,
+							'translate_value': translate,
+							});
+						}
+						else{
+							this.column_table_to_associate.push(
+							{
+							'id': `${this.sheet_table_asigned[i]['id']}`,
+							'sheet': `${this.sheet_table_asigned[i]['sheet']}`,
+							'table': `${this.sheet_table_asigned[i]['tmp_table']}`,
+							'key': `${key}`
+							});
+						}
+					}
+				}
+			}
+		},
+		selectColumTableAndSheetAvailable: function(){
+			let sheet = this.selected_sheet.value;
+			if(sheet != ''){
+				let column_table_to_associate = this.column_table_to_associate;
+				for(let i  in column_table_to_associate){
+					if(`${column_table_to_associate[i]['sheet']}` == sheet){
+						this.table_columns_availables.push({
+							'key': `${column_table_to_associate[i]['key']}`
+						});
+					}
+				}
+				let column_sheet_to_associate = this.column_sheet_to_associate;
+				for(let i in this.column_sheet_to_associate){
+					if(`${column_sheet_to_associate[i]['sheet']}` == sheet){
+						this.sheet_columns_availables.push({
+							'key': `${column_sheet_to_associate[i]['key']}`,
+							'value': `${column_sheet_to_associate[i]['value']}`
+						});
+					}
+				}
+			}else{
+				this.table_columns_availables = [];
+				this.sheet_columns_availables = [];
+				this.selected_column_table = '';
+				this.selected_column_sheet = '';
+			}
+		},
+		sendForm: function(){
+			if (this.selected_sheet && this.selected_column_table && this.selected_column_sheet) {
+				this.form_data = new FormData();
+				this.form_data.append('selected_id', this.selected_sheet.id);
+				this.form_data.append('selected_key', this.selected_column_table);
+				this.form_data.append('selected_value', this.selected_column_sheet);
+				
+				var url_associate_columns = 'http://www.full-stack.cl/load-unload-spreadsheet/upload/set-associate-columns';
+				
+				axios
+				.post(url_associate_columns, this.form_data)
+				.then((res) => {
+					if (res.data.success) {
+						this.$nextTick(this.loadTodo);
+					}
+					if (res.data.error) {
+						$('#error').html(res.data.error)
+					}
+				})
+				.catch((error) =>{
+				  console.log(error);
+				});
+				
+			}			
+		},
+		removeItem: function(item, index) {
+			this.associate_columns.splice(index, 1);
+			this.form_data = new FormData();
+			this.form_data.append('selected_id', item.id);
+			this.form_data.append('selected_sheet', item.sheet);
+			this.form_data.append('selected_table_available', item.tmp_table);
+			this.form_data.append('selected_key', item.key);
+			this.form_data.append('selected_value', item.value);
+			
+			var url_reverse_associate_column = 'http://www.full-stack.cl/load-unload-spreadsheet/upload/reverse-associate-columns';
+
+			axios
+			.post(url_reverse_associate_column, this.form_data)
+			.then((res) => {
+				if (res.data.success) {
+					this.$nextTick(this.loadTodo);
+				}
+				if (res.data.error) {
+					$('#error').html(res.data.error)
+				}
+			})
+			.catch((error) =>{
+				console.log(error);
+			});
+		},
+		loadFileInDatabase: function(){
+			var url_load_file_in_database = 'http://www.full-stack.cl/load-unload-spreadsheet/upload/load-file-in-database';
+
+			axios
+			.get(url_load_file_in_database)
+			.then((res) => {
+				if (res.data.success) {
+					this.selected_sheet = [];
+					this.sheet_availables = [];
+					this.table_columns_availables = [];
+					this.sheet_columns_availables = [];
+					
+					this.associate_columns = [];
+					this.column_table_to_associate = [];
+					this.column_sheet_to_associate = [];
+				}
+				if (res.data.error) {
+					$('#error').html(res.data.error)
+				}
+			})
+			.catch((error) =>{
+				console.log(error);
+			});
+		}
+	}
+});
 
 var load_on_table = new Vue({
   el: "#load_data_on_tables"

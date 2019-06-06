@@ -26,14 +26,10 @@ class Upload extends CI_Controller {
 			$this->load->model('Load_file_model');
 			$this->load->helper('functions');
 			$this->load->helper(array('form', 'url'));
-			
-
 	}
 	public function index()
 	{
-		//$this->output->enable_profiler(TRUE);
-		//$this->generate_file();
-		//$this->download();
+		redirect('/', 'location', 301);
 		
 	}
 	public function do_upload()
@@ -79,10 +75,10 @@ class Upload extends CI_Controller {
 					
 					$obj_spreadsheet = new Spreadsheet_lib();
 					$obj_spreadsheet->init($full_path);
-					$worksheet_names = $obj_spreadsheet->get_list_worksheet_names();
+					$sheets = $obj_spreadsheet->get_list_worksheet_names();
 					
 					$sheet_tables = array();
-					foreach ($worksheet_names as $worksheet)
+					foreach ($sheets as $worksheet)
 					{
 						$item_data = array(
 							'id_load' => $id_load_file,
@@ -93,50 +89,64 @@ class Upload extends CI_Controller {
 						$sheet_tables[] = $item_data;
 					}
 					$res = $this->Load_file_model->insert_sheet_table($sheet_tables);
-					$this->session->set_userdata("worksheet_names", $worksheet_names);
+					$this->session->set_userdata("worksheet_names", $sheets);
 					$this->session->set_userdata("tables", $tables);
+					
+					$success = array(
+						'success' => 'success',
+						'sheets' => $sheets,
+						'tables' => $tables
+					);
+					
+					echo json_encode($success);
 				}
 				else
 				{
 					$this->session->unset_userdata("id_load_file");
-				}			
-				
-				$success = array(
-					'success' => 'success'
-				);
-				
-				echo json_encode($success);
+					$error = 'No existe identificador de carga';
+					echo json_encode($error);
+				}
 			}
 		}
     }
 	public function load_preview_data()
 	{
 		$id_load_file = $this->session->userdata('id_load_file');
-		$full_path = $this->Load_file_model->get_full_path($id_load_file);
-		$obj_spreadsheet = new Spreadsheet_lib();
-		$obj_spreadsheet->init($full_path);
-		//$cols_name = $obj_spreadsheet->get_list_cols_name();
-		$topfive_elements = $obj_spreadsheet->get_topfive_elements();
-		$this->session->set_userdata("topfive_elements", $topfive_elements);
-		$success = array(
-			'success' => 'success',
-			'topfive_elements' => $topfive_elements
-		);
-		echo json_encode($success);
+		if(!empty($id_load_file) && $id_load_file > 0)
+		{
+			$full_path = $this->Load_file_model->get_full_path($id_load_file);
+			$obj_spreadsheet = new Spreadsheet_lib();
+			$obj_spreadsheet->init($full_path);
+			//$cols_name = $obj_spreadsheet->get_list_cols_name();
+			$top_elements = $obj_spreadsheet->get_top_elements($id_load_file);
+			$this->session->set_userdata("top_elements", $top_elements);
+			$success = array(
+				'success' => 'success',
+				'top_elements' => $top_elements
+			);
+			echo json_encode($success);
+		}
+		else
+		{
+			$this->session->unset_userdata("id_load_file");
+			$error = 'No existe identificador de carga';
+			echo json_encode($error);
+		}
 	}
 	public function step2()
 	{
 		$id_load_file = $this->session->userdata('id_load_file');
-		$worksheet_names = $this->session->userdata('worksheet_names');
-		$tables_columns = $this->session->userdata('tables_columns');
 		
-		$data['id_load_file'] = $id_load_file;
-		$data['worksheet_names'] = $worksheet_names;
-		$data['tables_columns'] = $tables_columns;
-		
-		$this->load->view('templates/header');
-		$this->load->view('spreadsheet/step-two', $data);
-		$this->load->view('templates/footer');
+		if(!empty($id_load_file) && $id_load_file > 0)
+		{
+			$this->load->view('templates/header');
+			$this->load->view('spreadsheet/step-two');
+			$this->load->view('templates/footer');
+		}
+		else
+		{
+			redirect('/', 'location', 301);
+		}
 	}
 	function file_selected(){
 
@@ -157,13 +167,21 @@ class Upload extends CI_Controller {
 	public function get_worksheets()
 	{
 		$id_load_file = $this->session->userdata('id_load_file');
-		$sheets = $this->Load_file_model->get_sheet_not_asigned($id_load_file);
-		
-		$success = array(
-			'success' => 'success',
-			'sheets' => $sheets
-		);
-		echo json_encode($success);
+		if(!empty($id_load_file) && $id_load_file > 0)
+		{
+			$sheets = $this->Load_file_model->get_sheet_not_asigned($id_load_file);
+			$success = array(
+				'success' => 'success',
+				'sheets' => $sheets
+			);
+			echo json_encode($success);
+		}
+		else
+		{
+			$this->session->unset_userdata("id_load_file");
+			$error = 'No existe identificador de carga';
+			echo json_encode($error);
+		}
 	}
 	
 	public function get_tables_available()
@@ -179,21 +197,31 @@ class Upload extends CI_Controller {
 		else
 		{
 			$id_load_file = $this->session->userdata('id_load_file');
-			$tables_asigned = $this->Load_file_model->get_table_not_asigned($id_load_file);
-			$tables = $this->session->userdata('tables');
-			
-			foreach($tables as $item):
-				if (!in_array($item, $tables_asigned))
-				{
-					array_push($tables_available,$item);
-				}
-			endforeach;
+			if(!empty($id_load_file) && $id_load_file > 0)
+			{
+				$tables_asigned = $this->Load_file_model->get_table_not_asigned($id_load_file);
+				$tables = $this->session->userdata('tables');
+				
+				foreach($tables as $item):
+					if (!in_array($item, $tables_asigned))
+					{
+						array_push($tables_available,$item);
+					}
+				endforeach;
+				
+				$success = array(
+					'success' => 'success',
+					'tables_available' => $tables_available
+				);
+				echo json_encode($success);
+			}
+			else
+			{
+				$this->session->unset_userdata("id_load_file");
+				$error = 'No existe identificador de carga';
+				echo json_encode($error);
+			}
 		}
-		$success = array(
-			'success' => 'success',
-			'tables_available' => $tables_available
-		);
-		echo json_encode($success);
 	}
 	public function set_associate_sheet_table()
 	{
@@ -209,26 +237,35 @@ class Upload extends CI_Controller {
 		else
 		{
 			$id_load_file = $this->session->userdata('id_load_file');
-			$columns = $this->Excel_model->list_fields($selected_table_available);
-			
-			$columns_to_asign = array();
-			foreach ($columns as $column)
+			if(!empty($id_load_file) && $id_load_file > 0)
 			{
-					$columns_to_asign[$column] = '';
-			}
-			$sheet_table = array(
-				'tmp_table' => $selected_table_available,
-				'relation' => json_encode($columns_to_asign)
-			);
-			$res = $this->Load_file_model->update_sheet_table_by_id_load($id_load_file, $selected_sheet, $sheet_table);
+				$columns = $this->Excel_model->list_fields($selected_table_available);
+				
+				$columns_to_asign = array();
+				foreach ($columns as $column)
+				{
+						$columns_to_asign[$column] = '';
+				}
+				$sheet_table = array(
+					'tmp_table' => $selected_table_available,
+					'relation' => json_encode($columns_to_asign)
+				);
+				$res = $this->Load_file_model->update_sheet_table_by_id_load($id_load_file, $selected_sheet, $sheet_table);
+				
+				$sheets = $this->Load_file_model->get_sheet_not_asigned($id_load_file);
 			
-			$sheets = $this->Load_file_model->get_sheet_not_asigned($id_load_file);
-		
-			$success = array(
-				'success' => 'success',
-				'sheets' => $sheets
-			);
-			echo json_encode($success);	
+				$success = array(
+					'success' => 'success',
+					'sheets' => $sheets
+				);
+				echo json_encode($success);
+			}
+			else
+			{
+				$this->session->unset_userdata("id_load_file");
+				$error = 'No existe identificador de carga';
+				echo json_encode($error);
+			}
 		}
 	}
 	public function reverse_associate_sheet_table()
@@ -245,37 +282,244 @@ class Upload extends CI_Controller {
 		else
 		{
 			$id_load_file = $this->session->userdata('id_load_file');
-			$sheet_table = array(
-				'tmp_table' => '-'
-			);
-			$res = $this->Load_file_model->update_sheet_table_by_id_load($id_load_file, $selected_sheet, $sheet_table);
+			if(!empty($id_load_file) && $id_load_file > 0)
+			{
+				$sheet_table = array(
+					'tmp_table' => '-'
+				);
+				$res = $this->Load_file_model->update_sheet_table_by_id_load($id_load_file, $selected_sheet, $sheet_table);
+				
+				$sheets = $this->Load_file_model->get_sheet_not_asigned($id_load_file);
 			
-			$sheets = $this->Load_file_model->get_sheet_not_asigned($id_load_file);
-		
-			$success = array(
-				'success' => 'success',
-				'sheets' => $sheets
-			);
-			echo json_encode($success);	
+				$success = array(
+					'success' => 'success',
+					'sheets' => $sheets
+				);
+				echo json_encode($success);
+			}
+			else
+			{
+				$this->session->unset_userdata("id_load_file");
+				$error = 'No existe identificador de carga';
+				echo json_encode($error);
+			}
 		}
 	}
 	public function get_associate_sheet_table()
 	{
 		$id_load_file = $this->session->userdata('id_load_file');
-		$associate_sheet_table = $this->Load_file_model->get_sheet_table_asigned($id_load_file);
-	
-		$success = array(
-			'success' => 'success',
-			'associate_sheet_table' => $associate_sheet_table
-		);
-		echo json_encode($success);
+		if(!empty($id_load_file) && $id_load_file > 0)
+		{
+			$associate_sheet_table = $this->Load_file_model->get_sheet_table_asigned($id_load_file);
+		
+			$success = array(
+				'success' => 'success',
+				'associate_sheet_table' => $associate_sheet_table
+			);
+			echo json_encode($success);
+		}
+		else
+		{
+			$this->session->unset_userdata("id_load_file");
+			$error = 'No existe identificador de carga';
+			echo json_encode($error);
+		}
 	}
 	public function step3()
 	{
 		$id_load_file = $this->session->userdata('id_load_file');
-		$data['algo'] = '';
-		$this->load->view('templates/header');
-		$this->load->view('spreadsheet/step-three', $data);
-		$this->load->view('templates/footer');
+		if(!empty($id_load_file) && $id_load_file > 0)
+		{
+			$this->load->view('templates/header');
+			$this->load->view('spreadsheet/step-three');
+			$this->load->view('templates/footer');
+		}
+		else
+		{
+			redirect('/', 'location', 301);
+		}
+	}
+	function get_associate_columns()
+	{
+		$id_load_file = $this->session->userdata('id_load_file');
+		if(!empty($id_load_file) && $id_load_file > 0)
+		{
+			$top_elements = $this->session->userdata('top_elements');
+			
+			$sheet_columns = array();
+			$row_one = array();
+			foreach($top_elements as $key => $elements):
+				if($this->Load_file_model->is_sheet_table_asigned($id_load_file, $key))
+				{
+					$column = $key;
+					$row_one = $elements[0];
+					$sheet_columns[$column] = $row_one;
+				}
+			endforeach;
+			$this->session->set_userdata("sheet_columns", $sheet_columns);
+			$sheet_table_asigned = $this->Load_file_model->get_sheet_table_asigned($id_load_file);
+			$success = array(
+				'success' => 'success',
+				'sheet_table_asigned' => $sheet_table_asigned,
+				'sheet_columns' => $sheet_columns
+			);
+			echo json_encode($success);
+		}
+		else
+		{
+			$this->session->unset_userdata("id_load_file");
+			$error = 'No existe identificador de carga';
+			echo json_encode($error);
+		}
+	}
+	public function set_associate_columns()
+	{		
+		$selected_id = $this->security->xss_clean($this->input->post('selected_id'));
+		$selected_key = $this->security->xss_clean($this->input->post('selected_key'));
+		$selected_value = $this->security->xss_clean($this->input->post('selected_value'));
+		
+		$this->form_validation->set_rules('selected_id', 'Id', 'trim|required');
+		$this->form_validation->set_rules('selected_key', 'Key', 'trim|required');
+		$this->form_validation->set_rules('selected_value', 'Value', 'trim|required');
+		
+		if ($this->form_validation->run()==FALSE)
+		{
+			$error = 'Error en validación';
+            echo json_encode($error);
+		}
+		else
+		{
+			$id_load_file = $this->session->userdata('id_load_file');
+			if(!empty($id_load_file) && $id_load_file > 0)
+			{
+				$res = $this->Load_file_model->update_relation_column_by_id($selected_id, $selected_key, $selected_value);
+				$sheet_columns = $this->session->userdata("sheet_columns");
+				$sheet_table_asigned = $this->Load_file_model->get_sheet_table_asigned($id_load_file);
+				$success = array(
+					'success' => 'success',
+					'sheet_table_asigned' => $sheet_table_asigned,
+					'sheet_columns' => $sheet_columns
+				);
+				echo json_encode($success);
+			}
+			else
+			{
+				$this->session->unset_userdata("id_load_file");
+				$error = 'No existe identificador de carga';
+				echo json_encode($error);
+			}
+		}
+	}
+	public function reverse_associate_columns()
+	{		
+		$selected_id = $this->security->xss_clean($this->input->post('selected_id'));
+		$selected_sheet = $this->security->xss_clean($this->input->post('selected_sheet'));
+		$selected_table_available = $this->security->xss_clean($this->input->post('selected_table_available'));
+		$selected_key = $this->security->xss_clean($this->input->post('selected_key'));
+		$selected_value = $this->security->xss_clean($this->input->post('selected_value'));
+		
+		$this->form_validation->set_rules('selected_id', 'Id', 'trim|required');
+		$this->form_validation->set_rules('selected_sheet', 'Sheet', 'trim|required');
+		$this->form_validation->set_rules('selected_table_available', 'Sheet', 'trim|required');
+		$this->form_validation->set_rules('selected_key', 'Key', 'trim|required');
+		$this->form_validation->set_rules('selected_value', 'Value', 'trim|required');
+		
+		if ($this->form_validation->run()==FALSE) 
+		{
+			$error = 'Error en validación';
+            echo json_encode($error);
+		}
+		else
+		{
+			$id_load_file = $this->session->userdata('id_load_file');
+			if(!empty($id_load_file) && $id_load_file > 0)
+			{
+				$res = $this->Load_file_model->update_relation_column_by_id($selected_id, $selected_key, '');
+				
+				$sheet_columns = $this->session->userdata("sheet_columns");
+				$sheet_table_asigned = $this->Load_file_model->get_sheet_table_asigned($id_load_file);
+				$success = array(
+					'success' => 'success',
+					'sheet_table_asigned' => $sheet_table_asigned,
+					'sheet_columns' => $sheet_columns
+				);				
+				echo json_encode($success);
+			}
+			else
+			{
+				$this->session->unset_userdata("id_load_file");
+				$error = 'No existe identificador de carga';
+				echo json_encode($error);
+			}
+		}
+	}
+	public function load_file_in_database()
+	{
+		$this->output->enable_profiler(TRUE);
+		
+		$id_load_file = $this->session->userdata('id_load_file');
+		if(!empty($id_load_file) && $id_load_file > 0)
+		{
+			$sheet_and_column = array();
+			$sheet_table_asigned = $this->Load_file_model->get_final_relationship($id_load_file);
+			
+			if(!empty($sheet_table_asigned))
+			{
+				foreach($sheet_table_asigned as $item):
+					$id = $item['id'];
+					$id_load = $item['id_load'];
+					$sheet = $item['sheet'];
+					$last_column_letter = $item['last_column_letter'];
+					$total_row = $item['total_row'];
+					
+					$tmp_table = $item['tmp_table'];
+					$relation = json_decode($item['relation']);
+					
+					if(!empty($relation))
+					{	
+						$columns = array();
+						$only_columns = array();
+						foreach($relation as $key => $value) {
+							if(!empty($value)){
+								array_push ($columns,
+									array($key => $value)
+								);
+								array_push($only_columns,$value);
+							}
+						}
+						asort($only_columns);
+						array_push($sheet_and_column,(array(
+							'id' => $id,
+							'id_load' => $id_load,
+							'sheet' => $sheet,
+							'last_column_letter' => $last_column_letter,
+							'total_row' => $total_row,
+							'only_columns' => $only_columns,
+							$sheet => $columns,
+							'tmp_table' => $tmp_table
+						)));
+					}
+				endforeach;
+				
+				if(!empty($sheet_and_column))
+				{
+					$full_path = $this->Load_file_model->get_full_path($id_load_file);
+					$obj_spreadsheet = new Spreadsheet_lib();
+					$obj_spreadsheet->init($full_path);
+					
+					foreach($sheet_and_column as $item):
+						$sheet = $item['sheet'];
+						$last_column_letter = $item['last_column_letter'];
+						$total_row = $item['total_row'];
+						$tmp_table = $item['tmp_table'];
+						$lwsi = $obj_spreadsheet->get_fulldata_by_sheet($sheet, $last_column_letter, $total_row, $only_columns, $tmp_table);
+						echo "<br><pre>";
+						print_r($lwsi);
+						echo "<br></pre>";
+					endforeach;
+					//
+				}
+			}
+		}
 	}
 }

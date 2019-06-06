@@ -75,10 +75,15 @@
 									  <b-collapse :id="'collapse' + index" visible>
 										<b-card>
 											<div class="table-responsive">
-												<table class="table">
+												<table class="table table-striped">
+												<thead>
+													<tr v-for="(rowth, key) in rowcolumn" v-if="key < 1">
+														<th v-for="(colth, key2) in rowth">{{colth}}  </td>
+													</tr>
+												</thead>
 												<tbody>
-													<tr v-for="(row, key) in rowcolumn">
-														<td v-for="(col, key) in row">{{col}} </td>
+													<tr v-for="(rowtd, key3) in rowcolumn" v-if="key3 >= 1">
+														<td v-for="(coltd, key4) in rowtd">{{coltd}}</td>
 													</tr>
 												</tbody>
 												</table>

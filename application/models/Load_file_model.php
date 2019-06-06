@@ -1,5 +1,4 @@
 <?php
-
 class Load_file_model extends CI_Model
 {
 	function __construct()
@@ -30,6 +29,21 @@ class Load_file_model extends CI_Model
 		$this->db->trans_begin();
 		
 		$this->db->insert_batch('sheet_table', $sheet_tables);
+		if ($this->db->trans_status() === FALSE){
+			$this->db->trans_rollback();
+			$result = 0;
+		}else{
+			$this->db->trans_commit();
+			$result = 1;
+		}
+		return $result;
+	}
+	function insert_data_in_tmp_table($table, $data)
+	{
+		$result = 0;
+		$this->db->trans_begin();
+		
+		$this->db->insert_batch($table, $data);
 		if ($this->db->trans_status() === FALSE){
 			$this->db->trans_rollback();
 			$result = 0;
@@ -79,13 +93,23 @@ class Load_file_model extends CI_Model
 		if(!empty($result)){
 			foreach($result as $item):
 				$tmp = array(
+					'id' => $item['id'],
 					'sheet' => $item['sheet'],
-					'tmp_table' => $item['tmp_table']
+					'tmp_table' => $item['tmp_table'],
+					'relation' => $item['relation']
 				);
 				array_push($sheet_table_asigned,$tmp);
 			endforeach;
 		}
 		return $sheet_table_asigned;
+	}
+	function get_final_relationship($id_load){
+		$this->db->select('id,id_load,sheet,last_column_letter,total_row,tmp_table,relation');
+		$this->db->where('id_load',$id_load);
+		$this->db->where('tmp_table !=', '-');
+		$this->db->order_by('id', 'DESC');
+		$result = $this->db->get('sheet_table')->result_array();
+		return $result;
 	}
 	function get_sheet_table($id_load){
 		$this->db->select('id,id_load,sheet,tmp_table,relation');
@@ -100,7 +124,7 @@ class Load_file_model extends CI_Model
 		$this->db->trans_begin();
 		
 		$this->db->where('id', $id);
-		$this->db->update('sheet_table');
+		$this->db->update('sheet_table', $sheet_table);
 		
 		if ($this->db->trans_status() === FALSE){
 			$this->db->trans_rollback();
@@ -129,6 +153,24 @@ class Load_file_model extends CI_Model
 		}
 		return $result;
 	}
+	function update_sheet_table_complement($id_load, $sheet, $sheet_table)
+	{
+		$result = 0;
+		$this->db->trans_begin();
+		
+		$this->db->where('id_load', $id_load);
+		$this->db->where('sheet', $sheet);
+		$this->db->update('sheet_table', $sheet_table);
+		
+		if ($this->db->trans_status() === FALSE){
+			$this->db->trans_rollback();
+			$result = 0;
+		}else{
+			$this->db->trans_commit();
+			$result = 1;
+		}
+		return $result;
+	}
 	function get_full_path($id)
 	{
 		$path = '';
@@ -144,6 +186,34 @@ class Load_file_model extends CI_Model
 				endforeach;
 		}
 		return $path;
+	}
+	function update_relation_column_by_id($id, $key, $value)
+	{
+		$result = 0;
+		$this->db->trans_begin();
+		
+		$this->db->set('relation', "JSON_REPLACE(relation, '$.$key', '$value')", FALSE);
+		$this->db->where('id', $id);
+		$this->db->update('sheet_table');
+		
+		if ($this->db->trans_status() === FALSE){
+			$this->db->trans_rollback();
+			$result = 0;
+		}else{
+			$this->db->trans_commit();
+			$result = 1;
+		}
+		return $result;
+	}
+	function is_sheet_table_asigned($id_load, $sheet){
+		$this->db->select('id');
+		$this->db->where('id_load',$id_load);
+		$this->db->where('sheet', $sheet);
+		$this->db->where('tmp_table !=', '-');
+		$this->db->order_by('id', 'DESC');
+		$cantidad = $this->db->get('sheet_table')->num_rows();
+		if($cantidad > 0) return TRUE;
+		else return FALSE;
 	}
 }
 ?>

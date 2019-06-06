@@ -10,6 +10,7 @@ use PhpOffice\PhpSpreadsheet\IOFactory;
 class Spreadsheet_lib {
 	
 	var $full_path, $file_type, $reader, $sheet_names, $columns, $topten_elements;
+	private $ci;
 	
 	function __construct() {
 		require_once( 'MyReadFilter.php' );
@@ -21,6 +22,9 @@ class Spreadsheet_lib {
 		$ext = ucwords(strtolower(end($arr_file)));
 		$this->file_type = $ext;
 		$this->reader = IOFactory::createReader($ext);
+		$this->ci =& get_instance();
+
+		$this->ci->load->model('Load_file_model');
 	}
 	public function get_list_worksheet_names()
 	{
@@ -28,8 +32,7 @@ class Spreadsheet_lib {
 		return $worksheet_names;
 	}
 	public function get_list_cols_name()
-	{
-		
+	{		
 		$cols_name = array();
 		$worksheet_data = $this->reader->listWorksheetInfo($this->full_path);
 		foreach ($worksheet_data as $worksheet)
@@ -54,7 +57,26 @@ class Spreadsheet_lib {
 		}
 		return $cols_name;
 	}
-	public function get_topfive_elements()
+	public function list_worksheet_info($sheet)
+	{		
+		$worksheet_info = array();
+		$worksheet_data = $this->reader->listWorksheetInfo($this->full_path);
+		foreach ($worksheet_data as $worksheet)
+		{
+			if($sheet == $worksheet['worksheetName'] )
+			{
+				$last_column_letter = $worksheet['lastColumnLetter'];
+				$total_row = $worksheet['totalRows'];
+				array_push($worksheet_info,array(
+					'last_column_letter' => $last_column_letter,
+					'total_row' => $total_row
+				));
+				return $worksheet_info;
+			}
+		}
+		return null;
+	}
+	public function get_top_elements($id_load)
 	{	
 		$elements = array();
 		$worksheet_data = $this->reader->listWorksheetInfo($this->full_path);
@@ -62,6 +84,14 @@ class Spreadsheet_lib {
 		{
 			$last_column_letter = $worksheet['lastColumnLetter'];
 			$worksheet_name = $worksheet['worksheetName'];
+			$total_row = $worksheet['totalRows'];
+			$sheet_table = array(
+				'last_column_letter' => $last_column_letter,
+				'total_row' => $total_row
+			);
+			
+			$rs = $this->ci->Load_file_model->update_sheet_table_complement($id_load, $worksheet_name, $sheet_table);
+			
 			$limit_preview = MAX_ROW_LIMIT_PREVIEW+1;
 			$filterSubset = new MyReadFilter(1, $limit_preview, range('A', $last_column_letter));
 			$this->reader->setLoadSheetsOnly($worksheet_name);
@@ -86,39 +116,77 @@ class Spreadsheet_lib {
 		}
 		return $elements;
 	}
-	
-	public function get_topfive_elements_by_worksheet($worksheet_name, $last_column_letter)
+	public function get_top_elements_by_worksheet($worksheet_name)
 	{	
 		$elements = array();
-		$filterSubset = new MyReadFilter(2, 7, range('A', $last_column_letter));
-		$this->reader->setLoadSheetsOnly($worksheet_name);
-		$this->reader->setReadFilter($filterSubset);
-		$spreadsheet = $this->reader->load($this->full_path);
-		
-		//$worksheet = $spreadsheet->getActiveSheet()->toArray(null, true, true, true);
-		
-		
-		$worksheet_full = $spreadsheet->getActiveSheet();
-		
-		$highest_row = $worksheet_full->getHighestRow(); // e.g. 10
-		$highest_column = $worksheet_full->getHighestColumn();
-		// Increment the highest column letter
-		$highest_column++;
-		
-		if($highest_row > 6)
+		$worksheet_data = $this->reader->listWorksheetInfo($this->full_path);
+		foreach ($worksheet_data as $worksheet)
 		{
-			$highest_row = 6;
-		}
-		$rows_elements = array();
-		for ($row = 2; $row <= $highest_row; ++$row) {
-			$cols_element = array();
-			for ($col = 'A'; $col != $highest_column; ++$col) {
-				$cols_element[$col] = $worksheet_full->getCell($col . $row)->getValue();
+			if($worksheet['worksheetName'] === $worksheet_name)
+			{
+				$last_column_letter = $worksheet['lastColumnLetter'];
+				$worksheet_name = $worksheet['worksheetName'];
+				$limit_preview = MAX_ROW_LIMIT_PREVIEW+1;
+				$filterSubset = new MyReadFilter(1, $limit_preview, range('A', $last_column_letter));
+				$this->reader->setLoadSheetsOnly($worksheet_name);
+				$this->reader->setReadFilter($filterSubset);
+				//$reader->setReadDataOnly(true);
+				$spreadsheet = $this->reader->load($this->full_path);
+				
+				$worksheet_full = $spreadsheet->getActiveSheet()->toArray(null, true, true, true);
+
+				$row_for_delete = array();
+				foreach ($worksheet_full as $key => $value):
+					if(!valid_row($value))
+					{
+						array_push($row_for_delete, $key);
+					}
+				endforeach;
+				foreach ($row_for_delete as $key):
+					unset($worksheet_full[$key]);
+				endforeach;
+				$worksheet_full = array_values($worksheet_full);
+				$elements[$worksheet_name] =  $worksheet_full;
 			}
-			$rows_elements[] = $cols_element;
 		}
-		$elements[$worksheet_name] = $rows_elements;
-		
 		return $elements;
+	}
+	public function get_fulldata_by_sheet($sheet, $last_column_letter, $total_row, $only_columns, $tmp_table)
+	{
+		$elements = array();
+		if(end( $only_columns ) < $last_column_letter)
+		{
+			$last_column_letter = end( $only_columns );
+		}
+		
+		// Define how many rows we want for each "chunk"
+		$chunk_size = 20;
+
+		// Loop to read our worksheet in "chunk size" blocks
+		for ($start_row = 2; $start_row <= $total_row; $start_row += $chunk_size)
+		{
+			$end_row = $start_row+$chunk_size;
+			if($total_row < $end_row){
+				$end_row = $total_row;
+			}
+			$filterSubset = new MyReadFilter($start_row, $end_row , range('A',$last_column_letter));
+			$this->reader->setLoadSheetsOnly($sheet);
+			$this->reader->setReadFilter($filterSubset);
+			$spreadsheet = $this->reader->load($this->full_path);
+			$worksheet_full = $spreadsheet->getActiveSheet()->toArray(null, true, true, true);
+
+			$row_for_delete = array();
+			$full_elements = array();
+			foreach ($worksheet_full as $key => $value):
+				$new_row = get_data_column($value, $only_columns, $last_column_letter);
+				if(valid_row($new_row))
+				{
+					array_push($full_elements, $new_row);
+				}
+			endforeach;
+			$elements[$sheet] =  $full_elements;
+			
+			return $elements;
+		}
 	}
 }
