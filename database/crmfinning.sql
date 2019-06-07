@@ -42,6 +42,9 @@ CREATE TABLE `sheet_table` (
   `id` bigint(20) NOT NULL,
   `id_load` bigint(20) NOT NULL,
   `sheet` varchar(100) COLLATE utf8mb4_unicode_ci NOT NULL,
+  `last_column_letter` varchar(5) COLLATE utf8mb4_unicode_ci DEFAULT '',
+  `total_row` int(11) DEFAULT '0',
+  `processed_records` int(11) NOT NULL DEFAULT '0',
   `tmp_table` varchar(100) COLLATE utf8mb4_unicode_ci NOT NULL,
   `relation` json NOT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
