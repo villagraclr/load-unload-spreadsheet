@@ -453,16 +453,28 @@ class Upload extends CI_Controller {
 			}
 		}
 	}
+	public function process()
+	{
+		$id_load_file = $this->session->userdata('id_load_file');
+		if(!empty($id_load_file) && $id_load_file > 0)
+		{
+			$this->load->view('templates/header');
+			$this->load->view('spreadsheet/process');
+			$this->load->view('templates/footer');
+		}
+		else
+		{
+			redirect('/', 'location', 301);
+		}
+	}
 	public function load_file_in_database()
 	{
-		$this->output->enable_profiler(TRUE);
-		
 		$id_load_file = $this->session->userdata('id_load_file');
 		if(!empty($id_load_file) && $id_load_file > 0)
 		{
 			$sheet_and_column = array();
 			$sheet_table_asigned = $this->Load_file_model->get_final_relationship($id_load_file);
-			
+			$summary = array();
 			if(!empty($sheet_table_asigned))
 			{
 				foreach($sheet_table_asigned as $item):
@@ -471,36 +483,34 @@ class Upload extends CI_Controller {
 					$sheet = $item['sheet'];
 					$last_column_letter = $item['last_column_letter'];
 					$total_row = $item['total_row'];
-					
+					$processed_records = $item['processed_records'];					
 					$tmp_table = $item['tmp_table'];
 					$relation = json_decode($item['relation']);
 					
 					if(!empty($relation))
 					{	
 						$columns = array();
-						$only_columns = array();
 						foreach($relation as $key => $value) {
 							if(!empty($value)){
-								array_push ($columns,
-									array($key => $value)
-								);
-								array_push($only_columns,$value);
+								$columns[$key] = $value;
 							}
 						}
-						asort($only_columns);
-						array_push($sheet_and_column,(array(
-							'id' => $id,
-							'id_load' => $id_load,
-							'sheet' => $sheet,
-							'last_column_letter' => $last_column_letter,
-							'total_row' => $total_row,
-							'only_columns' => $only_columns,
-							$sheet => $columns,
-							'tmp_table' => $tmp_table
-						)));
+						if(!empty($columns))
+						{
+							asort($columns);
+							array_push($sheet_and_column,(array(
+								'id' => $id,
+								'id_load' => $id_load,
+								'sheet' => $sheet,
+								'last_column_letter' => $last_column_letter,
+								'total_row' => $total_row,
+								'processed_records' => $processed_records,
+								'columns' => $columns,
+								'tmp_table' => $tmp_table
+							)));							
+						}
 					}
 				endforeach;
-				
 				if(!empty($sheet_and_column))
 				{
 					$full_path = $this->Load_file_model->get_full_path($id_load_file);
@@ -508,18 +518,57 @@ class Upload extends CI_Controller {
 					$obj_spreadsheet->init($full_path);
 					
 					foreach($sheet_and_column as $item):
+						$id = $item['id'];
 						$sheet = $item['sheet'];
 						$last_column_letter = $item['last_column_letter'];
 						$total_row = $item['total_row'];
+						$processed_records = $item['processed_records'];
+						$columns = $item['columns'];
 						$tmp_table = $item['tmp_table'];
-						$lwsi = $obj_spreadsheet->get_fulldata_by_sheet($sheet, $last_column_letter, $total_row, $only_columns, $tmp_table);
-						echo "<br><pre>";
-						print_r($lwsi);
-						echo "<br></pre>";
+						
+						$start_row = 2;
+						if($processed_records == 0)
+						{
+							$this->Load_file_model->truncate_table($tmp_table);
+							
+						}
+						else
+						{
+							$start_row = $processed_records;
+						}
+						if($total_row > 5){
+							//call job to load charge
+							$end_row = $start_row+5;
+							$processed_records += 5;							
+						}
+						else
+						{
+							$processed_records = $total_row;
+							$end_row = $total_row;
+						}	
+						//
+						$obj_spreadsheet->get_fulldata_by_sheet($id, $sheet, $last_column_letter, $start_row, $end_row, $columns, $tmp_table);
+						
+						array_push($summary, array(
+							'sheet' => $sheet,
+							'table' => $tmp_table,
+							'records' => $total_row,
+							'processed_records' => $processed_records
+						));					
 					endforeach;
-					//
 				}
-			}
+			}			
+			$success = array(
+				'success' => 'success',
+				'summary' => $summary
+			);
+			echo json_encode($success);
+		}
+		else
+		{
+			$this->session->unset_userdata("id_load_file");
+			$error = 'No existe identificador de carga';
+			echo json_encode($error);
 		}
 	}
 }

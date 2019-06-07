@@ -355,6 +355,10 @@ Vue.component('load-data-on-tables', {
 		},
 		selectColumTableAndSheetAvailable: function(){
 			let sheet = this.selected_sheet.value;
+			this.table_columns_availables = [];
+			this.sheet_columns_availables = [];
+			this.selected_column_table = '';
+			this.selected_column_sheet = '';
 			if(sheet != ''){
 				let column_table_to_associate = this.column_table_to_associate;
 				for(let i  in column_table_to_associate){
@@ -373,11 +377,6 @@ Vue.component('load-data-on-tables', {
 						});
 					}
 				}
-			}else{
-				this.table_columns_availables = [];
-				this.sheet_columns_availables = [];
-				this.selected_column_table = '';
-				this.selected_column_sheet = '';
 			}
 		},
 		sendForm: function(){
@@ -459,4 +458,39 @@ Vue.component('load-data-on-tables', {
 
 var load_on_table = new Vue({
   el: "#load_data_on_tables"
+})
+Vue.component('load-summary', {
+	template: '#load-summary-template',
+	data: function() {
+		return {
+			show_preview: true,
+			summary: [
+			]
+		}
+	},
+	created () {
+		this.$nextTick(this.loadFileInDatabase);
+	},
+	methods: {
+		loadFileInDatabase: function(){
+			var url = 'http://www.full-stack.cl/load-unload-spreadsheet/upload/load-file-in-database';
+			axios.get(url)
+			.then((res) => {
+				if (res.data.success) {
+					this.show_preview = false;
+					this.summary = res.data.summary;
+				}
+				if (res.data.error) {
+					$('#error').html(res.data.error)
+				}	
+			})
+			.catch((error) =>{
+			  console.log(error);
+			});
+		}
+	}
+});
+
+var load_summary = new Vue({
+  el: "#load_summary"
 })

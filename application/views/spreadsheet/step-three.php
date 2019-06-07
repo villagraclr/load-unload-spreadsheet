@@ -19,21 +19,22 @@
 				<div class="form-group">
 					<label for="email">Sheet:</label>
 					<select v-model="selected_sheet" @change="selectColumTableAndSheetAvailable()" required>
+						<option value='' selected>Seleccione</option>
 						<option v-for="item in sheet_availables" v-bind:value="{ id: item.key, value: item.value }"	selected>
 							 {{ item.value }}
 						   </option>
 					   </select>
 				</div>
 				<div class="form-group">
-					<label for="email">Table Column:</label>
-					<select v-model="selected_column_table" required>
-						<option v-for="item in table_columns_availables" :value="item.key">{{item.key}}</option>
-					</select>
-				</div>
-				<div class="form-group">
 					<label for="email">Sheet Column:</label>
 					<select v-model="selected_column_sheet" required>
 						<option v-for="item in sheet_columns_availables" :value="item.key">{{ item.value }}</option>
+					</select>
+				</div>
+				<div class="form-group">
+					<label for="email">Table Column:</label>
+					<select v-model="selected_column_table" required>
+						<option v-for="item in table_columns_availables" :value="item.key">{{item.key}}</option>
 					</select>
 				</div>
 				<div class="form-group">
@@ -69,7 +70,7 @@
 					$attributes = array(
 							'class' => 'btn btn-primary'
 					);
-					echo anchor('upload/load-file-in-database', 'Load File in Database', $attributes);
+					echo anchor('upload/process', 'Load File in Database', $attributes);
 					?>
 				</div>
 			</div>

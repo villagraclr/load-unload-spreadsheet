@@ -85,9 +85,10 @@ class Spreadsheet_lib {
 			$last_column_letter = $worksheet['lastColumnLetter'];
 			$worksheet_name = $worksheet['worksheetName'];
 			$total_row = $worksheet['totalRows'];
+			
 			$sheet_table = array(
-				'last_column_letter' => $last_column_letter,
-				'total_row' => $total_row
+					'last_column_letter' => $last_column_letter,
+					'total_row' => $total_row
 			);
 			
 			$rs = $this->ci->Load_file_model->update_sheet_table_complement($id_load, $worksheet_name, $sheet_table);
@@ -96,25 +97,57 @@ class Spreadsheet_lib {
 			$filterSubset = new MyReadFilter(1, $limit_preview, range('A', $last_column_letter));
 			$this->reader->setLoadSheetsOnly($worksheet_name);
 			$this->reader->setReadFilter($filterSubset);
-			//$reader->setReadDataOnly(true);
 			$spreadsheet = $this->reader->load($this->full_path);
 			
 			$worksheet_full = $spreadsheet->getActiveSheet()->toArray(null, true, true, true);
 
-			$row_for_delete = array();
+			$full_elements = array();
 			foreach ($worksheet_full as $key => $value):
-				if(!valid_row($value))
+				if(valid_row($value))
 				{
-					array_push($row_for_delete, $key);
+					array_push($full_elements, $value);
 				}
 			endforeach;
-			foreach ($row_for_delete as $key):
-				unset($worksheet_full[$key]);
-			endforeach;
-			$worksheet_full = array_values($worksheet_full);
-			$elements[$worksheet_name] =  $worksheet_full;
+			$elements[$worksheet_name] =  $full_elements;
 		}
 		return $elements;
+	}
+	public function get_fulldata_by_sheet($id, $sheet, $last_column_letter, $start_row, $total_row, $columns, $tmp_table)
+	{
+		$elements = array();
+		$first_column_letter = 'A';
+		if(reset( $columns ) > 'A')
+		{
+			$first_column_letter = reset( $columns );
+		}
+		if(end( $columns ) < $last_column_letter)
+		{
+			$last_column_letter = end( $columns );
+		}
+		$end_row = $total_row;
+		$filterSubset = new MyReadFilter($start_row, $end_row , range($first_column_letter, $last_column_letter));
+		$this->reader->setLoadSheetsOnly($sheet);
+		$this->reader->setReadFilter($filterSubset);
+		$spreadsheet = $this->reader->load($this->full_path);
+		$worksheet_full = $spreadsheet->getActiveSheet()->toArray(null, true, true, true);
+
+		$full_elements = array();
+		foreach ($worksheet_full as $key => $value):
+			$new_row = get_data_to_load_in_database($value, $columns, $last_column_letter);
+			if(!empty($new_row))
+			{
+				array_push($full_elements, $new_row);
+			}
+		endforeach;
+		if(!empty($full_elements))
+		{
+			$rs = $this->ci->Load_file_model->insert_data_in_tmp_table($tmp_table, $full_elements);
+			$sheet_table = array(
+					'processed_records' => $total_row
+			);
+			
+			$rs = $this->ci->Load_file_model->update_sheet_table($id, $sheet_table);
+		}
 	}
 	public function get_top_elements_by_worksheet($worksheet_name)
 	{	
@@ -151,42 +184,5 @@ class Spreadsheet_lib {
 		}
 		return $elements;
 	}
-	public function get_fulldata_by_sheet($sheet, $last_column_letter, $total_row, $only_columns, $tmp_table)
-	{
-		$elements = array();
-		if(end( $only_columns ) < $last_column_letter)
-		{
-			$last_column_letter = end( $only_columns );
-		}
-		
-		// Define how many rows we want for each "chunk"
-		$chunk_size = 20;
-
-		// Loop to read our worksheet in "chunk size" blocks
-		for ($start_row = 2; $start_row <= $total_row; $start_row += $chunk_size)
-		{
-			$end_row = $start_row+$chunk_size;
-			if($total_row < $end_row){
-				$end_row = $total_row;
-			}
-			$filterSubset = new MyReadFilter($start_row, $end_row , range('A',$last_column_letter));
-			$this->reader->setLoadSheetsOnly($sheet);
-			$this->reader->setReadFilter($filterSubset);
-			$spreadsheet = $this->reader->load($this->full_path);
-			$worksheet_full = $spreadsheet->getActiveSheet()->toArray(null, true, true, true);
-
-			$row_for_delete = array();
-			$full_elements = array();
-			foreach ($worksheet_full as $key => $value):
-				$new_row = get_data_column($value, $only_columns, $last_column_letter);
-				if(valid_row($new_row))
-				{
-					array_push($full_elements, $new_row);
-				}
-			endforeach;
-			$elements[$sheet] =  $full_elements;
-			
-			return $elements;
-		}
-	}
+	
 }

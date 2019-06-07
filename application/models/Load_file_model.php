@@ -38,6 +38,10 @@ class Load_file_model extends CI_Model
 		}
 		return $result;
 	}
+	function truncate_table($table)
+	{
+		$this->db->truncate($table);
+	}
 	function insert_data_in_tmp_table($table, $data)
 	{
 		$result = 0;
@@ -104,7 +108,7 @@ class Load_file_model extends CI_Model
 		return $sheet_table_asigned;
 	}
 	function get_final_relationship($id_load){
-		$this->db->select('id,id_load,sheet,last_column_letter,total_row,tmp_table,relation');
+		$this->db->select('id,id_load,sheet,last_column_letter,total_row,processed_records,tmp_table,relation');
 		$this->db->where('id_load',$id_load);
 		$this->db->where('tmp_table !=', '-');
 		$this->db->order_by('id', 'DESC');
