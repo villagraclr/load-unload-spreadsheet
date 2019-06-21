@@ -1,4 +1,6 @@
 
+const APPURL = 'http://localhost/cargador/index.php/'
+
 Vue.component('upload-file-db', {
 	template: '#template-upload-form',
 	created: function() {
@@ -50,7 +52,8 @@ Vue.component('upload-file-db', {
 		},
 		loadPreviewData: function(){
 			this.show_preview = true;
-			var url_preview_data = 'http://www.full-stack.cl/load-unload-spreadsheet/upload/load-preview-data';
+			var url_preview_data = APPURL+'upload/load-preview-data';
+            console.log(url_preview_data);
 			axios.get(url_preview_data)
 			.then((res) => {
 				if (res.data.success) {
@@ -96,7 +99,7 @@ Vue.component('add-match-sheet-table', {
     }
   },
   created () {
-	var url = 'http://www.full-stack.cl/load-unload-spreadsheet/upload/get-worksheets';
+	var url = APPURL+'upload/get-worksheets';
 	axios.get(url)
 	.then((res) => {
 		if (res.data.success) {
@@ -121,7 +124,7 @@ Vue.component('add-match-sheet-table', {
 		this.form_data = new FormData();
 		this.form_data.append('selected_sheet', this.selected_sheet);
 		
-		var url_tables_availables = 'http://www.full-stack.cl/load-unload-spreadsheet/upload/get-tables-available';
+		var url_tables_availables = APPURL+'upload/get-tables-available';
 		
 		axios
 		.post(url_tables_availables, this.form_data)
@@ -139,7 +142,7 @@ Vue.component('add-match-sheet-table', {
 		
 	},
 	loadTodo: function(){
-		var url_asociate = 'http://www.full-stack.cl/load-unload-spreadsheet/upload/get-associate-sheet-table';
+		var url_asociate = APPURL+'upload/get-associate-sheet-table';
 		axios.get(url_asociate)
 		.then((res) => {
 			if (res.data.success) {
@@ -160,7 +163,7 @@ Vue.component('add-match-sheet-table', {
 			this.form_data.append('selected_sheet', this.selected_sheet);
 			this.form_data.append('selected_table_available', this.selected_table_available);
 			
-			var url_associate_sheet_table = 'http://www.full-stack.cl/load-unload-spreadsheet/upload/set-associate-sheet-table';
+			var url_associate_sheet_table = APPURL+'upload/set-associate-sheet-table';
 			
 			axios
 			.post(url_associate_sheet_table, this.form_data)
@@ -187,7 +190,7 @@ Vue.component('add-match-sheet-table', {
 		this.form_data.append('selected_sheet', todo.sheet);
 		this.form_data.append('selected_table_available', todo.tmp_table);
 		
-		var url_reverse_associate_sheet_table = 'http://www.full-stack.cl/load-unload-spreadsheet/upload/reverse-associate-sheet-table';
+		var url_reverse_associate_sheet_table = APPURL+'upload/reverse-associate-sheet-table';
 		
 		axios
 		.post(url_reverse_associate_sheet_table, this.form_data)
@@ -244,7 +247,7 @@ Vue.component('load-data-on-tables', {
 	},
 	methods: {
 		loadTodo: function(){
-			var url = 'http://www.full-stack.cl/load-unload-spreadsheet/upload/get-associate-columns';
+			var url = APPURL+'upload/get-associate-columns';
 			axios.get(url)
 			.then((res) => {
 				if (res.data.success) {
@@ -386,7 +389,7 @@ Vue.component('load-data-on-tables', {
 				this.form_data.append('selected_key', this.selected_column_table);
 				this.form_data.append('selected_value', this.selected_column_sheet);
 				
-				var url_associate_columns = 'http://www.full-stack.cl/load-unload-spreadsheet/upload/set-associate-columns';
+				var url_associate_columns = APPURL+'upload/set-associate-columns';
 				
 				axios
 				.post(url_associate_columns, this.form_data)
@@ -413,7 +416,7 @@ Vue.component('load-data-on-tables', {
 			this.form_data.append('selected_key', item.key);
 			this.form_data.append('selected_value', item.value);
 			
-			var url_reverse_associate_column = 'http://www.full-stack.cl/load-unload-spreadsheet/upload/reverse-associate-columns';
+			var url_reverse_associate_column = APPURL+'upload/reverse-associate-columns';
 
 			axios
 			.post(url_reverse_associate_column, this.form_data)
@@ -430,7 +433,7 @@ Vue.component('load-data-on-tables', {
 			});
 		},
 		loadFileInDatabase: function(){
-			var url_load_file_in_database = 'http://www.full-stack.cl/load-unload-spreadsheet/upload/load-file-in-database';
+			var url_load_file_in_database = APPURL+'upload/load-file-in-database';
 
 			axios
 			.get(url_load_file_in_database)
@@ -473,7 +476,7 @@ Vue.component('load-summary', {
 	},
 	methods: {
 		loadFileInDatabase: function(){
-			var url = 'http://www.full-stack.cl/load-unload-spreadsheet/upload/load-file-in-database';
+			var url = APPURL+'upload/load-file-in-database';
 			axios.get(url)
 			.then((res) => {
 				if (res.data.success) {
