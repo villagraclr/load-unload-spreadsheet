@@ -536,17 +536,13 @@ class Upload extends CI_Controller {
 						{
 							$start_row = $processed_records;
 						}
-						if($total_row > 5){
-							//call job to load charge
-							$end_row = $start_row+5;
-							$processed_records += 5;							
-						}
-						else
+						
+						if($total_row > MAX_ROW_LIMIT_LOAD)
 						{
-							$processed_records = $total_row;
-							$end_row = $total_row;
-						}	
-						//
+							$total_row = MAX_ROW_LIMIT_LOAD;
+						}
+						$processed_records = $total_row;
+						$end_row = $total_row;
 						$obj_spreadsheet->get_fulldata_by_sheet($id, $sheet, $last_column_letter, $start_row, $end_row, $columns, $tmp_table);
 						
 						array_push($summary, array(
