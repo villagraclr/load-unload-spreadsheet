@@ -141,7 +141,26 @@ class Spreadsheet_lib {
 		endforeach;
 		if(!empty($full_elements))
 		{
-			$rs = $this->ci->Load_file_model->insert_data_in_tmp_table($tmp_table, $full_elements);
+			//
+			$round = round($total_row/16000,0,PHP_ROUND_HALF_DOWN);
+			$mod = $total_row % 16000;
+			
+			if($mod > 0 )
+			{
+				$round++;
+			}
+			if(count($columns) > 10 && $total_row > 16000 && $round > 1)
+			{
+				$data = array_chunk($full_elements, $round, true);
+				foreach ( $data as $row ):
+					$rs = $this->ci->Load_file_model->insert_data_in_tmp_table($tmp_table, $row);
+				endforeach;
+			}
+			else
+			{
+				$rs = $this->ci->Load_file_model->insert_data_in_tmp_table($tmp_table, $full_elements);
+			}
+			
 			$sheet_table = array(
 					'processed_records' => $total_row
 			);

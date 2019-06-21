@@ -468,7 +468,7 @@ Vue.component('load-summary', {
 			]
 		}
 	},
-	created () {
+	mounted () {
 		this.$nextTick(this.loadFileInDatabase);
 	},
 	methods: {
