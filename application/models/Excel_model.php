@@ -21,7 +21,6 @@ class Excel_model extends CI_Model
 	function list_fields($table_name){
 		$fields = $this->db->list_fields($table_name);
 		return $fields;
-	}
-	
+	}	
 }
 ?>

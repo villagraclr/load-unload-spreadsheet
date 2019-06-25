@@ -13,7 +13,11 @@ class Spreadsheet_lib {
 	private $ci;
 	
 	function __construct() {
+<<<<<<< HEAD
 		require_once( 'MyReadFilter.php' );	
+=======
+		require_once( 'MyReadFilter.php' );
+>>>>>>> 6836a0ba492d21770997b492d262c3d6bd556f1d
 	}
 	public function init($full_path = '')
 	{
@@ -88,7 +92,11 @@ class Spreadsheet_lib {
 			
 			$sheet_table = array(
 					'last_column_letter' => $last_column_letter,
+<<<<<<< HEAD
 					'total_row' => $total_row-1
+=======
+					'total_row' => $total_row
+>>>>>>> 6836a0ba492d21770997b492d262c3d6bd556f1d
 			);
 			
 			$rs = $this->ci->Load_file_model->update_sheet_table_complement($id_load, $worksheet_name, $sheet_table);
@@ -112,7 +120,11 @@ class Spreadsheet_lib {
 		}
 		return $elements;
 	}
+<<<<<<< HEAD
 	public function get_fulldata_by_sheet($id, $id_load, $sheet, $last_column_letter, $start_row, $total_row, $columns, $tmp_table)
+=======
+	public function get_fulldata_by_sheet($id, $sheet, $last_column_letter, $start_row, $total_row, $columns, $tmp_table)
+>>>>>>> 6836a0ba492d21770997b492d262c3d6bd556f1d
 	{
 		$elements = array();
 		$first_column_letter = 'A';
@@ -124,6 +136,7 @@ class Spreadsheet_lib {
 		{
 			$last_column_letter = end( $columns );
 		}
+<<<<<<< HEAD
 		$end_row = $total_row+1;
 
 		$sheet_table = array(
@@ -132,6 +145,9 @@ class Spreadsheet_lib {
 
 		$rs = $this->ci->Load_file_model->update_sheet_table($id, $sheet_table);
 
+=======
+		$end_row = $total_row;
+>>>>>>> 6836a0ba492d21770997b492d262c3d6bd556f1d
 		$filterSubset = new MyReadFilter($start_row, $end_row , range($first_column_letter, $last_column_letter));
 		$this->reader->setLoadSheetsOnly($sheet);
 		$this->reader->setReadFilter($filterSubset);
@@ -139,13 +155,17 @@ class Spreadsheet_lib {
 		$worksheet_full = $spreadsheet->getActiveSheet()->toArray(null, true, true, true);
 
 		$full_elements = array();
+<<<<<<< HEAD
 		$count_elements = 1;
 		$processed_records = 0;
+=======
+>>>>>>> 6836a0ba492d21770997b492d262c3d6bd556f1d
 		foreach ($worksheet_full as $key => $value):
 			$new_row = get_data_to_load_in_database($value, $columns, $last_column_letter);
 			if(!empty($new_row))
 			{
 				array_push($full_elements, $new_row);
+<<<<<<< HEAD
 				if($count_elements == MAX_ROW_LIMIT_TO_PROCESS)
 				{
 					$processed_records += $count_elements;				
@@ -167,16 +187,47 @@ class Spreadsheet_lib {
 			$rs = $this->ci->Load_file_model->insert_data_in_tmp_table($tmp_table, $full_elements);
 			$sheet_table = array(
 				'processed_records' => $processed_records
+=======
+			}
+		endforeach;
+		if(!empty($full_elements))
+		{
+			//
+			$round = round($total_row/16000,0,PHP_ROUND_HALF_DOWN);
+			$mod = $total_row % 16000;
+			
+			if($mod > 0 )
+			{
+				$round++;
+			}
+			if(count($columns) > 10 && $total_row > 16000 && $round > 1)
+			{
+				$data = array_chunk($full_elements, $round, true);
+				foreach ( $data as $row ):
+					$rs = $this->ci->Load_file_model->insert_data_in_tmp_table($tmp_table, $row);
+				endforeach;
+			}
+			else
+			{
+				$rs = $this->ci->Load_file_model->insert_data_in_tmp_table($tmp_table, $full_elements);
+			}
+			
+			$sheet_table = array(
+					'processed_records' => $total_row
+>>>>>>> 6836a0ba492d21770997b492d262c3d6bd556f1d
 			);
 			
 			$rs = $this->ci->Load_file_model->update_sheet_table($id, $sheet_table);
 		}
+<<<<<<< HEAD
 		$sheet_table = array(
 			'status' => 3,
 			'processed_records' => $end_row-1
 		);
 
 		$rs = $this->ci->Load_file_model->update_sheet_table($id, $sheet_table);
+=======
+>>>>>>> 6836a0ba492d21770997b492d262c3d6bd556f1d
 	}
 	public function get_top_elements_by_worksheet($worksheet_name)
 	{	

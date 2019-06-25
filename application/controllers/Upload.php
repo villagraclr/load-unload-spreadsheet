@@ -473,10 +473,8 @@ class Upload extends CI_Controller {
 		if(!empty($id_load_file) && $id_load_file > 0)
 		{
 			$sheet_and_column = array();
-
 			$sheet_table_asigned = $this->Load_file_model->get_final_relationship($id_load_file);
 			$summary = array();
-			$this->session->unset_userdata("summary_".$id_load_file);
 			if(!empty($sheet_table_asigned))
 			{
 				foreach($sheet_table_asigned as $item):
